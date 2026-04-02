@@ -44,6 +44,9 @@ This tool is designed to:
 - Add unit switching (mm / m)
 - Improve UI/UX design
 - Add accessibility checks (e.g. ramp compliance)
+- Add scale bar
+- Keyboard shortcut — pressing Enter in any field triggers Calculate
+- Copy to clipboard button on each result so values can be pasted directly into drawings or spreadsheets
 
 ## 👩‍💻 Author
 
