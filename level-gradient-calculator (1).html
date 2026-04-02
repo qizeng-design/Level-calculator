@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Level & Gradient Calculator</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f5f4f0;
+    --surface: #ffffff;
+    --surface2: #f0efe9;
+    --border: #dddbd3;
+    --border-strong: #b8b5aa;
+    --text: #1a1916;
+    --text-muted: #6b6860;
+    --text-faint: #9e9b94;
+    --accent: #1e4d8c;
+    --accent-light: #e8eef7;
+    --accent-mid: #3a6db5;
+    --danger: #8c2020;
+    --danger-bg: #faeaea;
+    --radius: 10px;
+    --radius-lg: 16px;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 2rem 1rem 4rem;
+    line-height: 1.6;
+  }
+
+  .page { max-width: 720px; margin: 0 auto; }
+
+  header {
+    margin-bottom: 2.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .brand {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 0.5rem;
+  }
+
+  h1 {
+    font-size: 28px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 0.4rem;
+    letter-spacing: -0.02em;
+  }
+
+  .tagline { font-size: 15px; color: var(--text-muted); }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.75rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .card-title {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    margin-bottom: 1.25rem;
+  }
+
+  .inputs-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+
+  @media (max-width: 520px) { .inputs-grid { grid-template-columns: 1fr; } }
+
+  .field { display: flex; flex-direction: column; gap: 5px; }
+
+  .field label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-muted);
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+  }
+
+  .field label .unit {
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--text-faint);
+    font-family: 'DM Mono', monospace;
+  }
+
+  .field input {
+    width: 100%;
+    padding: 10px 12px;
+    font-size: 15px;
+    font-family: 'DM Mono', monospace;
+    font-weight: 500;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--text);
+    transition: border-color 0.15s, background 0.15s;
+    outline: none;
+  }
+
+  .field input:focus { border-color: var(--accent-mid); background: var(--accent-light); }
+
+  .field input.computed {
+    background: var(--surface2);
+    color: var(--accent);
+    border-color: var(--accent-mid);
+    border-style: dashed;
+  }
+
+  .field .hint { font-size: 11px; color: var(--text-faint); }
+
+  .btn-row { display: flex; gap: 10px; margin-top: 1.5rem; flex-wrap: wrap; }
+
+  .calc-btn, .reset-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 24px;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: 'DM Sans', sans-serif;
+    border-radius: var(--radius);
+    cursor: pointer;
+    letter-spacing: 0.01em;
+    transition: background 0.15s, transform 0.1s;
+  }
+
+  .calc-btn { background: var(--accent); color: #fff; border: none; }
+  .calc-btn:hover { background: var(--accent-mid); }
+  .calc-btn:active { transform: scale(0.98); }
+
+  .reset-btn { background: transparent; color: var(--text-muted); border: 1px solid var(--border-strong); }
+  .reset-btn:hover { background: var(--surface2); }
+  .reset-btn:active { transform: scale(0.98); }
+
+  .msg { margin-top: 1rem; padding: 10px 14px; border-radius: var(--radius); font-size: 13px; display: none; }
+  .msg.error { background: var(--danger-bg); color: var(--danger); border: 1px solid #f0c0c0; display: block; }
+
+  .results-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  @media (max-width: 480px) { .results-grid { grid-template-columns: 1fr; } }
+
+  .result-card { background: var(--surface2); border-radius: var(--radius); padding: 14px 16px; border: 1px solid var(--border); }
+  .result-card.featured { background: var(--accent-light); border-color: var(--accent-mid); }
+
+  .result-label { font-size: 11px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text-faint); margin-bottom: 6px; }
+  .result-card.featured .result-label { color: var(--accent-mid); }
+
+  .result-val { font-size: 17px; font-weight: 600; font-family: 'DM Mono', monospace; color: var(--text); line-height: 1.3; }
+  .result-card.featured .result-val { color: var(--accent); }
+
+  .diagram-card { overflow: visible; }
+  svg#diagram { width: 100%; display: block; }
+
+  footer { margin-top: 3rem; text-align: center; font-size: 12px; color: var(--text-faint); }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header>
+    <div class="brand">Landscape & Architecture Tools</div>
+    <h1>Level &amp; Gradient Calculator</h1>
+    <p class="tagline">Enter any three values — the fourth will be calculated automatically.</p>
+  </header>
+
+  <div class="card">
+    <div class="card-title">Parameters</div>
+    <div class="inputs-grid">
+      <div class="field">
+        <label>High Level <span class="unit">metres</span></label>
+        <input type="number" id="highLevel" placeholder="e.g. 64.145" step="0.001" />
+        <span class="hint">FFL or datum at high end</span>
+      </div>
+      <div class="field">
+        <label>Low Level <span class="unit">metres</span></label>
+        <input type="number" id="lowLevel" placeholder="e.g. 63.421" step="0.001" />
+        <span class="hint">FFL or datum at low end</span>
+      </div>
+      <div class="field">
+        <label>Distance <span class="unit">millimetres</span></label>
+        <input type="number" id="distance" placeholder="e.g. 15212" step="1" />
+        <span class="hint">Horizontal run</span>
+      </div>
+      <div class="field">
+        <label>Gradient <span class="unit">1:N</span></label>
+        <input type="text" id="gradient" placeholder="e.g. 1:21" />
+        <span class="hint">Enter as 1:N or just N</span>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="calc-btn" onclick="calculate()">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="1" y="1" width="14" height="14" rx="2" stroke="white" stroke-width="1.2"/>
+          <path d="M4 8h8M8 4v8" stroke="white" stroke-width="1.4" stroke-linecap="round"/>
+        </svg>
+        Calculate
+      </button>
+      <button class="reset-btn" onclick="resetAll()">Reset</button>
+    </div>
+
+    <div class="msg" id="msg"></div>
+  </div>
+
+  <div class="card" id="resultsCard" style="display:none;">
+    <div class="card-title">Results</div>
+    <div class="results-grid">
+      <div class="result-card">
+        <div class="result-label">Height Difference</div>
+        <div class="result-val" id="r-diff">—</div>
+      </div>
+      <div class="result-card featured">
+        <div class="result-label">Calculated</div>
+        <div class="result-val" id="r-result">—</div>
+      </div>
+      <div class="result-card">
+        <div class="result-label">Gradient</div>
+        <div class="result-val" id="r-grad">—</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card diagram-card" id="diagramCard" style="display:none;">
+    <div class="card-title" id="diagramTitle">Section Diagram — True Proportion</div>
+    <svg id="diagram" xmlns="http://www.w3.org/2000/svg"></svg>
+  </div>
+
+  <footer>Level &amp; Gradient Calculator &mdash; for landscape and architectural design</footer>
+
+</div>
+
+<script>
+function parseGradient(val) {
+  val = val.trim();
+  if (!val) return null;
+  if (val.startsWith('1:')) {
+    const n = parseFloat(val.slice(2));
+    return isNaN(n) ? null : n;
+  }
+  const n = parseFloat(val);
+  return isNaN(n) ? null : n;
+}
+
+function showMsg(txt) {
+  const m = document.getElementById('msg');
+  m.textContent = txt;
+  m.className = txt ? 'msg error' : 'msg';
+}
+
+function getVal(id) {
+  const v = document.getElementById(id).value.trim();
+  if (!v) return null;
+  if (id === 'gradient') return parseGradient(v);
+  const n = parseFloat(v);
+  return isNaN(n) ? null : n;
+}
+
+function setVal(id, val) {
+  const el = document.getElementById(id);
+  el.value = val;
+  el.classList.add('computed');
+}
+
+function clearComputed() {
+  ['highLevel','lowLevel','distance','gradient'].forEach(id => {
+    document.getElementById(id).classList.remove('computed');
+  });
+}
+
+function resetAll() {
+  ['highLevel','lowLevel','distance','gradient'].forEach(id => {
+    const el = document.getElementById(id);
+    el.value = '';
+    el.classList.remove('computed');
+  });
+  document.getElementById('resultsCard').style.display = 'none';
+  document.getElementById('diagramCard').style.display = 'none';
+  showMsg('');
+}
+
+function calculate() {
+  showMsg('');
+  clearComputed();
+
+  let hl = getVal('highLevel');
+  let ll = getVal('lowLevel');
+  let dist = getVal('distance'); // mm
+  let gradN = getVal('gradient');
+
+  const countKnown = [hl, ll, dist, gradN].filter(v => v !== null).length;
+
+  if (countKnown < 3) {
+    showMsg('Please enter at least three values.');
+    document.getElementById('resultsCard').style.display = 'none';
+    document.getElementById('diagramCard').style.display = 'none';
+    return;
+  }
+
+  let computedLabel = '', computedVal = '';
+
+  if (hl === null) {
+    const hd = dist / (gradN * 1000);
+    hl = ll + hd;
+    setVal('highLevel', hl.toFixed(3));
+    computedLabel = 'High Level'; computedVal = hl.toFixed(3) + ' m';
+  } else if (ll === null) {
+    const hd = dist / (gradN * 1000);
+    ll = hl - hd;
+    setVal('lowLevel', ll.toFixed(3));
+    computedLabel = 'Low Level'; computedVal = ll.toFixed(3) + ' m';
+  } else if (dist === null) {
+    const hd = hl - ll;
+    if (hd <= 0) { showMsg('High level must be greater than low level.'); return; }
+    dist = gradN * hd * 1000;
+    setVal('distance', dist.toFixed(0));
+    computedLabel = 'Distance'; computedVal = dist.toFixed(0) + ' mm';
+  } else if (gradN === null) {
+    const hd = hl - ll;
+    if (hd <= 0) { showMsg('High level must be greater than low level.'); return; }
+    gradN = dist / (hd * 1000);
+    const gStr = '1:' + gradN.toFixed(1);
+    document.getElementById('gradient').value = gStr;
+    document.getElementById('gradient').classList.add('computed');
+    computedLabel = 'Gradient'; computedVal = gStr;
+  } else {
+    const hd = hl - ll;
+    if (hd <= 0) { showMsg('High level must be greater than low level.'); return; }
+    gradN = dist / (hd * 1000);
+    computedLabel = 'Gradient (verified)'; computedVal = '1:' + gradN.toFixed(1);
+  }
+
+  const heightDiff = hl - ll;
+  if (heightDiff <= 0) { showMsg('High level must be greater than low level.'); return; }
+
+  document.getElementById('r-diff').textContent = (heightDiff * 1000).toFixed(1) + ' mm / ' + heightDiff.toFixed(3) + ' m';
+  document.getElementById('r-result').textContent = computedLabel + ': ' + computedVal;
+  document.getElementById('r-grad').textContent = '1:' + gradN.toFixed(1);
+  document.getElementById('resultsCard').style.display = 'block';
+
+  drawDiagram(hl, ll, dist, gradN, heightDiff);
+}
+
+function drawDiagram(hl, ll, dist, gradN, heightDiff) {
+  const svg = document.getElementById('diagram');
+  svg.innerHTML = '';
+  document.getElementById('diagramCard').style.display = 'block';
+
+  // --- True proportion scaling ---
+  // Both axes use the same px-per-mm scale so the slope angle is correct.
+  // Horizontal = dist (mm), Vertical = heightDiff * 1000 (mm)
+
+  const horizMM = dist;
+  const vertMM  = heightDiff * 1000;
+
+  // Available drawing pixels
+  const canvasW = 620;
+  const padL = 90;   // room for level labels left
+  const padR = 30;
+  const padT = 36;
+  const padB = 56;   // room for distance label below
+
+  const drawableW = canvasW - padL - padR;
+
+  // Start by fitting horizontal to available width
+  let scale = drawableW / horizMM; // px per mm
+
+  // Enforce a minimum rendered height of 55px so diagram is readable
+  const minHeightPx = 55;
+  if (vertMM * scale < minHeightPx) {
+    scale = minHeightPx / vertMM;
+  }
+
+  // If after upscaling horizontal exceeds canvas, clip back
+  // (keeps true proportion — we just limit the max width to canvasW - pads)
+  if (horizMM * scale > drawableW) {
+    scale = drawableW / horizMM;
+  }
+
+  const drawnW = horizMM * scale;
+  const drawnH = vertMM  * scale; // same scale → true proportion
+
+  const totalH = padT + drawnH + padB;
+
+  svg.setAttribute('viewBox', `0 0 ${canvasW} ${totalH}`);
+  svg.setAttribute('height', Math.round(totalH));
+
+  const x0 = padL;
+  const x1 = padL + drawnW;
+  const yTop = padT;          // high end (left)
+  const yBot = padT + drawnH; // low end (right)
+
+  function ns(tag, attrs) {
+    const el = document.createElementNS('http://www.w3.org/2000/svg', tag);
+    for (const k in attrs) el.setAttribute(k, attrs[k]);
+    return el;
+  }
+
+  function label(x, y, content, opts = {}) {
+    const el = ns('text', {
+      x, y,
+      fill: opts.fill || '#1a1916',
+      'font-size': opts.size || 12,
+      'font-family': opts.mono ? "'DM Mono',monospace" : "'DM Sans',sans-serif",
+      'text-anchor': opts.anchor || 'start',
+      'dominant-baseline': opts.baseline || 'auto',
+      'font-weight': opts.weight || 400
+    });
+    el.textContent = content;
+    return el;
+  }
+
+  // Ground hatching (dashed)
+  svg.appendChild(ns('line', {
+    x1: x0, y1: yBot + 14, x2: x1, y2: yBot + 14,
+    stroke: '#dddbd3', 'stroke-width': 1, 'stroke-dasharray': '5,5'
+  }));
+
+  // Horizontal datum (dashed)
+  svg.appendChild(ns('line', {
+    x1: x0, y1: yBot, x2: x1, y2: yBot,
+    stroke: '#b8b5aa', 'stroke-width': 0.5, 'stroke-dasharray': '4,4'
+  }));
+
+  // Vertical drop (dashed)
+  svg.appendChild(ns('line', {
+    x1: x1, y1: yTop, x2: x1, y2: yBot,
+    stroke: '#b8b5aa', 'stroke-width': 0.5, 'stroke-dasharray': '4,4'
+  }));
+
+  // Slope line — true proportion
+  svg.appendChild(ns('line', {
+    x1: x0, y1: yTop, x2: x1, y2: yBot,
+    stroke: '#1e4d8c', 'stroke-width': 2.5, 'stroke-linecap': 'round'
+  }));
+
+  // Endpoint dots
+  svg.appendChild(ns('circle', { cx: x0, cy: yTop, r: 5, fill: '#1e4d8c' }));
+  svg.appendChild(ns('circle', { cx: x1, cy: yBot, r: 5, fill: '#1e4d8c' }));
+
+  // Level labels
+  svg.appendChild(label(x0 - 8, yTop + 4, hl.toFixed(3) + ' m', { anchor: 'end', mono: true, weight: 500 }));
+  svg.appendChild(label(x1 + 8, yBot + 4, ll.toFixed(3) + ' m', { anchor: 'start', mono: true, weight: 500 }));
+
+  // HIGH / LOW small labels
+  svg.appendChild(label(x0 + 8, yTop + 16, 'HIGH', { size: 10, fill: '#3a6db5', weight: 600 }));
+  svg.appendChild(label(x1 - 8, yBot - 8,  'LOW',  { size: 10, fill: '#3a6db5', weight: 600, anchor: 'end' }));
+
+  // Height difference annotation (vertical arrow on right side of drop line)
+  if (drawnH > 24) {
+    const aX = x1 + 18;
+    const midY = (yTop + yBot) / 2;
+    svg.appendChild(ns('line', { x1: aX, y1: yTop + 2, x2: aX, y2: yBot - 2, stroke: '#9e9b94', 'stroke-width': 0.75 }));
+    svg.appendChild(ns('polygon', { points: `${aX-3},${yTop+10} ${aX+3},${yTop+10} ${aX},${yTop+2}`, fill: '#9e9b94' }));
+    svg.appendChild(ns('polygon', { points: `${aX-3},${yBot-10} ${aX+3},${yBot-10} ${aX},${yBot-2}`, fill: '#9e9b94' }));
+    svg.appendChild(label(aX + 5, midY, (heightDiff * 1000).toFixed(1) + ' mm', { size: 11, mono: true, fill: '#6b6860', baseline: 'middle' }));
+  }
+
+  // Distance label centred below
+  svg.appendChild(label(
+    (x0 + x1) / 2, yBot + padB - 14,
+    (dist / 1000).toFixed(3) + ' m  (' + parseFloat(dist).toFixed(0) + ' mm)',
+    { anchor: 'middle', size: 12, mono: true, fill: '#6b6860' }
+  ));
+
+  // Gradient label along slope
+  const angleDeg = Math.atan2(yBot - yTop, x1 - x0) * 180 / Math.PI;
+  const midSX = (x0 + x1) / 2;
+  const midSY = (yTop + yBot) / 2;
+  // Offset label perpendicular above the line
+  const perpX =  Math.sin(angleDeg * Math.PI / 180) * 14;
+  const perpY = -Math.cos(angleDeg * Math.PI / 180) * 14;
+  const gEl = ns('text', {
+    x: midSX + perpX, y: midSY + perpY,
+    fill: '#3a6db5', 'font-size': 12,
+    'font-family': "'DM Mono',monospace",
+    'text-anchor': 'middle', 'dominant-baseline': 'middle',
+    'font-weight': 500,
+    transform: `rotate(${angleDeg}, ${midSX + perpX}, ${midSY + perpY})`
+  });
+  gEl.textContent = '1:' + gradN.toFixed(1);
+  svg.appendChild(gEl);
+
+  // True proportion note (bottom right)
+  svg.appendChild(label(
+    canvasW - padR, totalH - 6,
+    'True proportion', { anchor: 'end', size: 10, fill: '#b8b5aa' }
+  ));
+
+  // Update diagram card title to show scale
+  const scaleRatio = Math.round(1 / scale); // approx 1:N display scale
+  document.getElementById('diagramTitle').textContent =
+    'Section Diagram — True Proportion  (approx 1:' + scaleRatio + ' scale)';
+}
+</script>
+</body>
+</html>
