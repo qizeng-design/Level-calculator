@@ -46,7 +46,10 @@ This tool is designed to:
 - Add accessibility checks (e.g. ramp compliance)
 - Add scale bar
 - Keyboard shortcut — pressing Enter in any field triggers Calculate
-- Copy to clipboard button on each result so values can be pasted directly into drawings or spreadsheets
+- Copy to clipboard button by press the value
+- defult current unit, but user can swithch mm to m for distance, and gradient to %.
+- landing or step option (check regulation M)
+- change high level title to start level, and change low level to end level, so it Allow negative gradients
 
 ## 👩‍💻 Author
 
